@@ -42,18 +42,22 @@ private:
             UNARRIVAL,
         } targetAction{};
     };
-    NavCore *navCore;
-    bool nav_on{},nav_pause{},newGoal{true};
-    std::vector<targetPose>targetPoseArray{};
-    std::vector<targetPose>::iterator iter;
+    
+    
+    
+   
     ros::Publisher log_pub;
     ServiceCaller* serviceCaller;
     void checkSrvFinish();
-    void getPoseArray();
+   
     void setGoal(const geometry_msgs::Pose2D &goal2d);
     void setGoalInOrder();
 public:
-
+    std::vector<targetPose>targetPoseArray{};
+    std::vector<targetPose>::iterator iter;
+    NavCore *navCore;
+    void getPoseArray();
+    bool nav_on{},nav_pause{},newGoal{true};
     void run();
     EP_Nav(const std::string& base_foot_print,std::string odom_frame,std::string map_frame,std::string serial_addr,bool publish_tf)
     {
@@ -121,12 +125,12 @@ void EP_Nav::getPoseArray()
             stringGet>>temp>>target_pose.pose.x>>target_pose.pose.y>>target_pose.pose.theta;
             target_pose.targetAction=targetPose::TargetAction(temp);
             targetPoseArray.push_back(target_pose);
-            printf("%f",target_pose.pose.x);
+            
         }
         input_file.close();
         std_msgs::String log_string;
         log_string.data="The total number of targets is"+std::to_string(targetPoseArray.size());
-        log_pub.publish(log_string);
+        //log_pub.publish(log_string);
 
     }
 }
@@ -135,7 +139,7 @@ void EP_Nav::getPoseArray()
 
 void EP_Nav::setGoalInOrder()
 {
-    if(nav_on && !targetPoseArray.empty()&&newGoal)
+    if(nav_on && !targetPoseArray.empty() && newGoal)
     {
         if(iter != targetPoseArray.end())
         {
@@ -172,28 +176,20 @@ void EP_Nav::checkSrvFinish()
 void EP_Nav::run()
 {
 
-    getPoseArray();
-    iter = targetPoseArray.begin();
+
+    
     if(iter!=targetPoseArray.end())
     {
         if(navCore->isGoalPassed((*iter).pose))
+        {
             iter++;
-        newGoal = true;
-        nav_pause=false;
-    }
-    checkSrvFinish();
-    setGoalInOrder();
-    // bool flag = client.call(srv);
-    // if (flag)
-    // {
-    //     ROS_INFO("call success");
-    // }
-    // else
-    // {
-    //     ROS_INFO("call failed");
-    //     return 1;
-    // }
+            ROS_INFO("new goal");
+            newGoal = true;
+        }
 
+    }
+    // checkSrvFinish();
+    setGoalInOrder();
 }
 
 int main(int argc, char** argv)
@@ -211,8 +207,11 @@ int main(int argc, char** argv)
     nh_.param("serial_addr",serial_addr,(std::string)"/dev/ttyS1");
     nh_.param("publish_tf",publish_tf,(bool)false);
     EP_Nav nav(base_foot_print,odom_frame,map_frame,serial_addr,publish_tf);
-
-    while(ros::ok())
+    nav.getPoseArray();
+    nav.iter = nav.targetPoseArray.begin();
+    
+    nav.nav_on = true;
+    while (ros::ok())
     {
         nav.run();
         loop_rate.sleep();

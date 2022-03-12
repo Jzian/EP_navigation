@@ -84,13 +84,16 @@ const geometry_msgs::Pose2D & NavCore::getCurrentPose(const std::string &target_
 bool NavCore::isGoalPassed(const geometry_msgs::Pose2D &goal_pose)
 {
     getCurrentPose(MAP_FRAME_,BASE_FOOT_PRINT_);
+    ROS_INFO_STREAM("current pose: x is "<<current_pose_.x<<" y is "<<current_pose_.y<<" theata is "<<current_pose_.theta);
     Eigen::Vector2d direction_array(cos(current_pose_.theta),sin(current_pose_.theta));
 
     Eigen::Vector2d distance_array(goal_pose.x-current_pose_.x,goal_pose.y-current_pose_.y);
-
+    double dx = std::abs(goal_pose.x-current_pose_.x);
+    double dy = std::abs(goal_pose.y-current_pose_.y);
+    double dtheta = std::abs(goal_pose.theta - current_pose_.theta);
     double distance = distance_array.dot(direction_array);
-
-    return std::abs(distance)<0.2||distance<0;
+    return dx < 0.4 && dy <0.4 && dtheta <0.4;
+    // return std::abs(distance)<0.2||distance<0;
 }
 void NavCore::setGoal(const geometry_msgs::Pose2D & goal2d)
 {
