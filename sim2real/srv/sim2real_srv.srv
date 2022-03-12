@@ -1,0 +1,16 @@
+#request
+int32 NAV=1
+int32 DETECTE=2
+int32 GRASPE=3
+int32 PUT=3
+int32 GOAL=5
+int32 HOME=6
+int32 LINEAR=7
+int32 CUTBACK=8
+#request type
+int32 type
+float64[3] transformation
+---
+#feedback status
+int32 status
+string status_string
